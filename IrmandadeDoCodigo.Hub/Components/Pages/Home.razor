@@ -1,7 +1,40 @@
 ﻿@page "/"
+@using Blazorise
+@using IrmandadeDoCodigo.Hub.Data
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext _context;
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+@foreach(var post in posts)
+{
+    <Card>
+        <CardBody>
+            <CardTitle Size="3">
+                @post.Title
+            </CardTitle>
+            <CardText>
+                @post.Body
+            </CardText>
+            <CardText>
+                @post.User.Name
+            </CardText>
+        </CardBody>
+    </Card>
+}
+
+@code {
+    List<Post> posts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        posts = await _context.Posts.AsNoTracking()
+            .Include(x=> x.User)    
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+    }
+}

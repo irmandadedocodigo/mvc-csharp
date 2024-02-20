@@ -1,0 +1,57 @@
+﻿@page "/posts/delete"
+@inject IrmandadeDoCodigo.Hub.Data.ApplicationDbContext DB
+@using IrmandadeDoCodigo.Hub.Data
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Post</h4>
+    <hr />
+    @if (post is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@post.Title</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Body</dt>
+            <dd class="col-sm-10">@post.Body</dd>
+        </dl>
+        <EditForm method="post" Model="post" OnValidSubmit="DeletePost" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(post is null)">Delete</button> |
+            <a href="/posts">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    Post? post;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        post = await DB.Posts.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (post is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    public async Task DeletePost()
+    {
+        DB.Posts.Remove(post!);
+        await DB.SaveChangesAsync();
+        NavigationManager.NavigateTo("/posts");
+    }
+}

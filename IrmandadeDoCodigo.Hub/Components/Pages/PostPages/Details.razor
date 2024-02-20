@@ -1,0 +1,47 @@
+﻿@page "/posts/details"
+@inject IrmandadeDoCodigo.Hub.Data.ApplicationDbContext DB
+@using IrmandadeDoCodigo.Hub.Data
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h4>Post</h4>
+    <hr />
+    @if (post is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@post.Title</dd>
+            <dt class="col-sm-2">Body</dt>
+            <dd class="col-sm-10">@post.Body</dd>
+        </dl>
+        <div>
+            <a href="@($"/posts/edit?id={post.Id}")">Edit</a> |
+            <a href="@($"/posts")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    Post? post;
+
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        post = await DB.Posts.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (post is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

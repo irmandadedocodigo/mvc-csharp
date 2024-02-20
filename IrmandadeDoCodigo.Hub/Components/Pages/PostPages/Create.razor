@@ -1,0 +1,58 @@
+﻿@page "/posts/create"
+@inject IrmandadeDoCodigo.Hub.Data.ApplicationDbContext _context
+@using IrmandadeDoCodigo.Hub.Components.Account
+@using IrmandadeDoCodigo.Hub.Data
+@inject NavigationManager NavigationManager
+@inject IdentityUserAccessor UserAccessor
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h4>Post</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="Post" OnValidSubmit="AddPost" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="Post.Title" class="form-control" /> 
+                <ValidationMessage For="() => Post.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="body" class="form-label">Body:</label> 
+                <InputText id="body" @bind-Value="Post.Body" class="form-control" /> 
+                <ValidationMessage For="() => Post.Body" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/posts">Back to List</a>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm]
+    public Post Post { get; set; } = new();
+
+    private ApplicationUser user = default;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task AddPost()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        Post.User = user;
+        Post.CreatedAt = DateTime.Now;
+        _context.Posts.Add(Post);
+        await _context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/posts");
+    }
+}

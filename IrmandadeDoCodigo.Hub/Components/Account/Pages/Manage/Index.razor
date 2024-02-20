@@ -2,12 +2,14 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using IrmandadeDoCodigo.Hub.Data
 
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
+@inject ApplicationDbContext _context;
 
 <PageTitle>Profile</PageTitle>
 
@@ -28,6 +30,11 @@
                 <label for="phone-number" class="form-label">Phone number</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
             </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Name" class="form-control" placeholder="Please enter your name." />
+                <label for="Name" class="form-label">Name</label>
+                <ValidationMessage For="() => Input.Name" class="text-danger" />
+            </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </EditForm>
     </div>
@@ -35,6 +42,7 @@
 
 @code {
     private ApplicationUser user = default!;
+    private ApplicationUser userFromTable = default!;
     private string? username;
     private string? phoneNumber;
 
@@ -49,8 +57,10 @@
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
-
+        userFromTable = await _context.Users.FirstOrDefaultAsync(x => x.Email == username);
+        Console.WriteLine(userFromTable);
         Input.PhoneNumber ??= phoneNumber;
+        Input.Name ??= user.Name;
     }
 
     private async Task OnValidSubmitAsync()
@@ -64,6 +74,10 @@
             }
         }
 
+        userFromTable.Name = Input.Name;
+        _context.Users.Update(userFromTable);
+        await _context.SaveChangesAsync();
+
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
     }
@@ -73,5 +87,8 @@
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
+
+        [Display(Name = "Name")]
+        public string? Name { get; set; }
     }
 }

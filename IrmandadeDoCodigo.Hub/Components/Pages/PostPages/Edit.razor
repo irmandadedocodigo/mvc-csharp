@@ -1,0 +1,91 @@
+﻿@page "/Posts/edit"
+@inject IrmandadeDoCodigo.Hub.Data.ApplicationDbContext DB
+@using IrmandadeDoCodigo.Hub.Data
+@inject NavigationManager NavigationManager
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h4>Post</h4>
+<hr />
+@if (Post is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Post" OnValidSubmit="UpdatePost" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <input type="hidden" name="Post.Id" value="@Post.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="Post.Title" class="form-control" />
+                    <ValidationMessage For="() => Post.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="body" class="form-label">Body:</label>
+                    <InputText id="body" @bind-Value="Post.Body" class="form-control" />
+                    <ValidationMessage For="() => Post.Body" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/posts">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    public Post? Post { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Post ??= await DB.Posts.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Post is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more details, see https://aka.ms/RazorPagesCRUD.
+    public async Task UpdatePost()
+    {
+        DB.Attach(Post!).State = EntityState.Modified;
+
+        try
+        {
+            await DB.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!PostExists(Post!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/posts");
+    }
+
+    bool PostExists(int id)
+    {
+        return DB.Posts.Any(e => e.Id == id);
+    }
+}

@@ -1,0 +1,44 @@
+﻿@page "/posts"
+@using IrmandadeDoCodigo.Hub.Components.Account
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using IrmandadeDoCodigo.Hub.Data
+@using Microsoft.EntityFrameworkCore
+@using System.Linq
+@inject IrmandadeDoCodigo.Hub.Data.ApplicationDbContext _context
+@inject IdentityUserAccessor UserAccessor
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="posts/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="@posts">
+    <PropertyColumn Property="post => post.Title" />
+    <PropertyColumn Property="post => post.Body" />
+
+    <TemplateColumn Context="post">
+        <a href="@($"posts/edit?id={post.Id}")">Edit</a> |
+        <a href="@($"posts/details?id={post.Id}")">Details</a> |
+        <a href="@($"posts/delete?id={post.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    IQueryable<Post> posts;
+    private ApplicationUser user = default;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        posts = _context.Posts
+            .Include(x => x.User)
+            .Where(x => x.User.Email == user.Email)
+            .AsQueryable();
+    }
+}
